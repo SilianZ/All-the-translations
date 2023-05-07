@@ -2,4 +2,5 @@ files:
   - source: /
     ignore:
       - README.md
+      - /.github/
     translation: /translations/%original_path%/%language%.%file_extension%
