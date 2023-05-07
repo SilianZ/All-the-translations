@@ -6,59 +6,40 @@ on:
       - main
 
 jobs:
-  build:
+  create_release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          python-version: 3.8
-
-      - name: Install Dependencies
-        run: pip install setuptools wheel twine
-
-      - name: Update Version
-        id: update_version
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { data } = await github.repos.getLatestRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-            const latest_release = data.tag_name;
-            const release_number = parseInt(latest_release.slice(1)) + 1;
-            console.log(release_number);
-            return release_number;
-
-      - name: Build
-        run: |
-          mkdir dist
-          zip -r dist/Release.zip translations/
-
+          node-version: '14.x'
+      - name: Install dependencies
+        run: npm install
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.0.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.update_version.outputs.result }}
-          release_name: Release v${{ steps.update_version.outputs.result }}
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
           body: |
-            This is release v${{ steps.update_version.outputs.result }} of my project.
+            This is an automatically generated release.
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Zip files
+        run: zip -r Release.zip path/to/directory
+      - name: Upload assets
+        id: upload_assets
+        uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/Release.zip
-          asset_name: Release v${{ steps.update_version.outputs.result }}.zip
+          asset_path: ./Release.zip
+          asset_name: Release v${{ github.run_number }}.zip
           asset_content_type: application/zip
+      - name: Cleanup
+        run: rm -rf Release.zip
