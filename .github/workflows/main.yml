@@ -34,7 +34,8 @@ jobs:
         prerelease: false
     - name: Zip directory
       run: |
-        zip -r release.zip translations/
+        cd translations
+        zip -r release.zip
     - name: Upload release asset
       uses: actions/upload-release-asset@v1
       env:
